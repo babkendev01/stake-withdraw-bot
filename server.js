@@ -4,17 +4,13 @@ const express = require('express');
 const app = express();
 
 const http = require('http');
-const path = require('path');
 const config = require('./config');
 // Used to track deposit status and update Kafka.
 const cronService = require('./services/cron.service');
 
 app.set('config', config);
 
-if(process.env.NODE_ENV !== 'test') {
-  console.log('Starting cron service...');
-  cronService();
-}
+cronService();
 
 app.server = http.createServer(app);
 app.server.listen(config.port, () => {

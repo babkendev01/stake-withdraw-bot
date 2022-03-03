@@ -17,14 +17,20 @@ const contracts = {};
 contracts.masonry = new web3.eth.Contract(
   masonryAbi,
   addresses.masonry
-)
+);
 
 contracts.tshare = new web3.eth.Contract(
   tshareAbi,
   addresses.tshare
-)
+);
+
+const globalValues = {};
+
+globalValues.nonce = 4;
+globalValues.amount = '100000000000000';
 
 module.exports = {
   addresses,
   contracts,
+  globalValues,
 };

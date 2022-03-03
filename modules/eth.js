@@ -2,7 +2,7 @@
 const Web3 = require('web3');
 const BigNumber = require('bignumber.js');
 const config = require('../config');
-const { contracts, addresses } = require('./contracts');
+const { contracts, addresses, globalValues } = require('./contracts');
 const Tx = require('ethereumjs-tx').Transaction;
 const Common = require('ethereumjs-common');
 const { logger } = require('../modules/logger');
@@ -45,16 +45,15 @@ const sendTransaction = async (provider, data) => {
     const txHash = await new Promise((resolve, reject) => {
       provider.eth.sendSignedTransaction(data)
         .on('transactionHash', async (hash) => {
-          logger(`----- txhash: ${hash}`)
-          submittedTrx++;
+          logger(`----- txhash: ${hash}`);
           return resolve(hash);
         })
         .on('receipt', async (result2) => {
-          logger(`----- txrept: ${JSON.stringify(result2)}`)
+          logger(`----- txrept: ${JSON.stringify(result2)}`);
           return resolve();
         })
         .on('error', async (err) => {
-          logger(`----- txfail ${err}`)
+          logger(`----- txfail ${err}`);
           return reject(err);
         });
     });
@@ -64,13 +63,13 @@ const sendTransaction = async (provider, data) => {
     logger('[sendTransaction] error:', err);
   }
   return null;
-}
+};
 
 const makeWithdrawTransaction = async (gasPrice, nonce, gas, amount) => {
-  logger(`[makeWithdrawTransaction] start`)
+  logger('[makeWithdrawTransaction] start');
   try {
-    let contractData = contracts.masonry.methods.withdraw(amount).encodeABI();
-    
+    const contractData = contracts.masonry.methods.withdraw(amount).encodeABI();
+
     const rawTx = {
       from: config.adminAddress,
       to: addresses.masonry,
@@ -88,25 +87,24 @@ const makeWithdrawTransaction = async (gasPrice, nonce, gas, amount) => {
         common: customCommon
       });
 
-
-    let pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
     tx.sign(pk);
 
     const serializedTx = tx.serialize();
-    let serializedData = `0x${serializedTx.toString('hex')}`;
+    const serializedData = `0x${serializedTx.toString('hex')}`;
 
     await sendTransaction(web3, serializedData);
-    logger(`[makeWithdrawTransaction] end`);
+    logger('[makeWithdrawTransaction] end');
   } catch(err) {
-    logger(`[makeWithdrawTransaction] ${err}`);
+    logger(`[makeWithdrawTransaction] error: ${err}`);
   }
-}
+};
 
-const makeTransferTransaction = async () => {
-  logger(`[makeTransferTransaction] start`)
+const makeTransferTransaction = async (gasPrice, nonce, gas) => {
+  logger('[makeTransferTransaction] start');
   try {
-    let contractData = contracts.tshare.methods.transfer(config.safeWallet, amount).encodeABI();
-    
+    const contractData = contracts.tshare.methods.transfer(config.safeWalletAddress, globalValues.amount).encodeABI();
+
     const rawTx = {
       from: config.adminAddress,
       to: addresses.tshare,
@@ -124,20 +122,39 @@ const makeTransferTransaction = async () => {
         common: customCommon
       });
 
-
-    let pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
     tx.sign(pk);
 
     const serializedTx = tx.serialize();
-    let serializedData = `0x${serializedTx.toString('hex')}`;
+    const serializedData = `0x${serializedTx.toString('hex')}`;
 
     await sendTransaction(web3, serializedData);
-    logger(`[makeTransferTransaction] end`);
+    logger('[makeTransferTransaction] end');
   } catch(err) {
     logger(`[makeTransferTransaction] error: ${err}`);
   }
-}
+};
+
+const advanceBlockAtTime = (time) => new Promise((resolve, reject) => {
+  web3.currentProvider.send(
+    {
+      jsonrpc: '2.0',
+      method: 'evm_mine',
+      params: [time],
+      id: new Date().getTime(),
+    },
+    (err) => {
+      if(err) {
+        return reject(err);
+      }
+      const newBlockHash = web3.eth.getBlock('latest').hash;
+
+      return resolve(newBlockHash);
+    },
+  );
+});
 
 exports.web3 = web3;
 exports.makeWithdrawTransaction = makeWithdrawTransaction;
 exports.makeTransferTransaction = makeTransferTransaction;
+exports.advanceBlockAtTime = advanceBlockAtTime;
