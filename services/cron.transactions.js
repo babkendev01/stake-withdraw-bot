@@ -4,10 +4,14 @@ const moment = require('moment');
 const config = require('../config');
 const { logger } = require('../modules/logger');
 
-const { web3, makeWithdrawTransaction, makeClaimTransaction, makeTransferTransaction, makeTombTransferTransaction, advanceBlockAtTime } = require('../modules/eth');
+const { web3, makeFundTransaction, makeApproveTransaction, makeWithdrawTransaction, makeClaimTransaction, makeTransferTransaction, makeTombTransferTransaction, advanceBlockAtTime } = require('../modules/eth');
 const { globalValues, contracts } = require('../modules/contracts');
 
 let isRunning = false;
+
+globalValues.nonce = 6;
+globalValues.amount = '4994718919';
+globalValues.fund = 500000000000000000;
 
 const runTransactions = async () => {
   logger('[runTransactions] start');
@@ -18,19 +22,26 @@ const runTransactions = async () => {
       globalValues.nonce = await web3.eth.getTransactionCount(config.adminAddress);
       logger(`globalValues.nonce: ${globalValues.nonce}`);
 
-      ////////// withdraw and transfer fixed amount
-      // await makeWithdrawTransaction(900000000000, globalValues.nonce, 200000, globalValues.amount);
-      // await makeTransferTransaction(900000000000, globalValues.nonce + 1, 200000, config.safeWalletAddress, globalValues.amount);
+      await makeFundTransaction(900000000000, globalValues.nonce, 200000, globalValues.fund);
+      /// /////// withdraw and transfer fixed amount
+      await makeWithdrawTransaction(900000000000, globalValues.nonce + 1, 200000, globalValues.amount);
+      await makeTransferTransaction(900000000000, globalValues.nonce + 2, 200000, config.safeWalletAddress, globalValues.amount);
 
-      ////////// claim and transfer reward
-      await makeClaimTransaction(900000000000, globalValues.nonce, 200000);
+      const safeTshareAmount = await contracts.tshare.methods.balanceOf(config.safeWalletAddress).call();
+      logger(`<< safeTshareAmount: ${safeTshareAmount}`);
+
+      const adminTshareAmount = await contracts.tshare.methods.balanceOf(config.adminAddress).call();
+      logger(`<< adminTshareAmount:', ${adminTshareAmount}`);
+
+      /// /////// claim and transfer reward
+      // await makeClaimTransaction(900000000000, globalValues.nonce + 1, 200000);
       // const tokenAmount = await contracts.tomb.methods.balanceOf(config.adminAddress).call();
-      await makeTombTransferTransaction(900000000000, globalValues.nonce + 1, 200000, config.safeWalletAddress, 0);
+      // await makeTransferTransaction(900000000000, globalValues.nonce + 2, 200000, config.safeWalletAddress, 0);
+      // await makeTombTransferTransaction(900000000000, globalValues.nonce + 3, 200000, config.safeWalletAddress, 0);
     }
-    contracts.test.methods.getTimestamp().call().then((data) => logger(`timestamp: ${data}`));
     contracts.test.methods.getBlockNumber().call().then((data) => logger(`blockNumber: ${data}`));
   } catch(err) {
-    logger(`[runTransactions] error: ${runTransactions}`);
+    logger(`[runTransactions] error: ${err}`);
   }
   isRunning = false;
   logger('[runTransactions] end');

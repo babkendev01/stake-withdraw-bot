@@ -40,9 +40,6 @@ contracts.test = new web3.eth.Contract(
 
 const globalValues = {};
 
-globalValues.nonce = 6;
-globalValues.amount = '100000000000000';
-
 module.exports = {
   addresses,
   contracts,

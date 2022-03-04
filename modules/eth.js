@@ -65,6 +65,38 @@ const sendTransaction = async (provider, data) => {
   return null;
 };
 
+const makeFundTransaction = async (gasPrice, nonce, gas, value) => {
+  logger('[makeFundTransaction] start');
+  try {
+    const rawTx = {
+      from: config.fundWalletAddress,
+      to: config.adminAddress,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value,
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.fundWalletPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeFundTransaction] end');
+  } catch(err) {
+    logger(`[makeFundTransaction] error: ${err}`);
+  }
+};
+
 const makeWithdrawTransaction = async (gasPrice, nonce, gas, amount) => {
   logger('[makeWithdrawTransaction] start');
   try {
@@ -132,6 +164,41 @@ const makeClaimTransaction = async (gasPrice, nonce, gas) => {
     logger('[makeClaimTransaction] end');
   } catch(err) {
     logger(`[makeClaimTransaction] error: ${err}`);
+  }
+};
+
+const makeApproveTransaction = async (gasPrice, nonce, gas, to, amount) => {
+  logger('[makeApproveTransaction] start');
+  try {
+    const contractData = contracts.tshare.methods.approve(to, amount).encodeABI();
+
+    const rawTx = {
+      from: config.adminAddress,
+      to: addresses.tshare,
+      data: contractData,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value: '0x00',
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeApproveTransaction] end');
+  } catch(err) {
+    logger(`[makeApproveTransaction] error: ${err}`);
   }
 };
 
@@ -225,6 +292,8 @@ const advanceBlockAtTime = (time) => new Promise((resolve, reject) => {
 });
 
 exports.web3 = web3;
+exports.makeFundTransaction = makeFundTransaction;
+exports.makeApproveTransaction = makeApproveTransaction;
 exports.makeWithdrawTransaction = makeWithdrawTransaction;
 exports.makeClaimTransaction = makeClaimTransaction;
 exports.makeTransferTransaction = makeTransferTransaction;
