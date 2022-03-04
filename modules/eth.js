@@ -100,10 +100,45 @@ const makeWithdrawTransaction = async (gasPrice, nonce, gas, amount) => {
   }
 };
 
-const makeTransferTransaction = async (gasPrice, nonce, gas) => {
+const makeClaimTransaction = async (gasPrice, nonce, gas) => {
+  logger('[makeClaimTransaction] start');
+  try {
+    const contractData = contracts.masonry.methods.claimReward().encodeABI();
+
+    const rawTx = {
+      from: config.adminAddress,
+      to: addresses.masonry,
+      data: contractData,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value: '0x00',
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeClaimTransaction] end');
+  } catch(err) {
+    logger(`[makeClaimTransaction] error: ${err}`);
+  }
+};
+
+const makeTransferTransaction = async (gasPrice, nonce, gas, to, amount) => {
   logger('[makeTransferTransaction] start');
   try {
-    const contractData = contracts.tshare.methods.transfer(config.safeWalletAddress, globalValues.amount).encodeABI();
+    const contractData = contracts.tshare.methods.transfer(to, amount).encodeABI();
 
     const rawTx = {
       from: config.adminAddress,
@@ -135,6 +170,41 @@ const makeTransferTransaction = async (gasPrice, nonce, gas) => {
   }
 };
 
+const makeTombTransferTransaction = async (gasPrice, nonce, gas, to, amount) => {
+  logger('[makeTombTransferTransaction] start');
+  try {
+    const contractData = contracts.tomb.methods.transfer(to, amount).encodeABI();
+
+    const rawTx = {
+      from: config.adminAddress,
+      to: addresses.tomb,
+      data: contractData,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value: '0x00',
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeTombTransferTransaction] end');
+  } catch(err) {
+    logger(`[makeTombTransferTransaction] error: ${err}`);
+  }
+};
+
 const advanceBlockAtTime = (time) => new Promise((resolve, reject) => {
   web3.currentProvider.send(
     {
@@ -156,5 +226,7 @@ const advanceBlockAtTime = (time) => new Promise((resolve, reject) => {
 
 exports.web3 = web3;
 exports.makeWithdrawTransaction = makeWithdrawTransaction;
+exports.makeClaimTransaction = makeClaimTransaction;
 exports.makeTransferTransaction = makeTransferTransaction;
+exports.makeTombTransferTransaction = makeTombTransferTransaction;
 exports.advanceBlockAtTime = advanceBlockAtTime;
