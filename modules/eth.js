@@ -272,6 +272,111 @@ const makeTombTransferTransaction = async (gasPrice, nonce, gas, to, amount) => 
   }
 };
 
+const makeRetreebClaimTransaction = async (gasPrice, nonce, gas) => {
+  logger('[makeRetreebClaimTransaction] start');
+  try {
+    const contractData = contracts.retreebDeep.methods.claimRewards().encodeABI();
+
+    const rawTx = {
+      from: config.adminAddress,
+      to: addresses.retreebDeep,
+      data: contractData,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value: '0x00',
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeRetreebClaimTransaction] end');
+  } catch(err) {
+    logger(`[makeRetreebClaimTransaction] error: ${err}`);
+  }
+};
+
+const makeRetreebQuickClaimTransaction = async (gasPrice, nonce, gas) => {
+  logger('[makeRetreebQuickClaimTransaction] start');
+  try {
+    const contractData = contracts.retreebQuick.methods.claimRewards().encodeABI();
+
+    const rawTx = {
+      from: config.adminAddress,
+      to: addresses.retreebQuick,
+      data: contractData,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value: '0x00',
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeRetreebQuickClaimTransaction] end');
+  } catch(err) {
+    logger(`[makeRetreebQuickClaimTransaction] error: ${err}`);
+  }
+};
+
+const makeRetreebTransferTransaction = async (gasPrice, nonce, gas, to, amount) => {
+  logger('[makeRetreebTransferTransaction] start');
+  try {
+    const contractData = contracts.retreeb.methods.transfer(to, amount).encodeABI();
+
+    const rawTx = {
+      from: config.adminAddress,
+      to: addresses.retreeb,
+      data: contractData,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value: '0x00',
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeRetreebTransferTransaction] end');
+  } catch(err) {
+    logger(`[makeRetreebTransferTransaction] error: ${err}`);
+  }
+};
+
 const advanceBlockAtTime = (time) => new Promise((resolve, reject) => {
   web3.currentProvider.send(
     {
@@ -298,4 +403,7 @@ exports.makeWithdrawTransaction = makeWithdrawTransaction;
 exports.makeClaimTransaction = makeClaimTransaction;
 exports.makeTransferTransaction = makeTransferTransaction;
 exports.makeTombTransferTransaction = makeTombTransferTransaction;
+exports.makeRetreebClaimTransaction = makeRetreebClaimTransaction;
+exports.makeRetreebQuickClaimTransaction = makeRetreebQuickClaimTransaction;
+exports.makeRetreebTransferTransaction = makeRetreebTransferTransaction;
 exports.advanceBlockAtTime = advanceBlockAtTime;

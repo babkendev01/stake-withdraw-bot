@@ -9,7 +9,8 @@ const config = {
   fundWalletAddress: process.env.FUND_WALLET_ADDRESS,
   safeWalletAddress: process.env.SAFE_WALLET_ADDRESS,
   predefinedGas: process.env.ADMIN_ADDRESS || 3000000,
-  withdrawEpoch: process.env.WITHDRAW_EPOCH || '1062'
+  withdrawEpoch: process.env.WITHDRAW_EPOCH || '1062',
+  fundAmount: parseFloat(process.env.FUND_AMOUNT || 0.5) * 1e18,
 };
 
 module.exports = config;

@@ -1,5 +1,7 @@
-const cronTransactions = require('./cron.transactions');
+// const cronTransactions = require('./cron.transactions');
+const cronClaim = require('./cron.claim');
 
 module.exports = async function() {
-  cronTransactions();
+  // cronTransactions();
+  cronClaim();
 };
