@@ -342,6 +342,41 @@ const makeRetreebQuickClaimTransaction = async (gasPrice, nonce, gas) => {
   }
 };
 
+const makeQuickPoolWithdrawTransaction = async (gasPrice, nonce, gas) => {
+  logger('[makeQuickPoolWithdrawTransaction] start');
+  try {
+    const contractData = contracts.retreebQuick.methods.withdrawAll().encodeABI();
+
+    const rawTx = {
+      from: config.adminAddress,
+      to: addresses.retreebQuick,
+      data: contractData,
+      gasPrice: `0x${gasPrice.toString(16)}`,
+      gas: `0x${gas.toString(16)}`,
+      value: '0x00',
+      nonce: `0x${nonce.toString(16)}`
+    };
+
+    const tx = new Tx(rawTx,
+      {
+      // chain: config.web3Chain,
+      // hardfork: config.web3Hardfork
+        common: customCommon
+      });
+
+    const pk = new Buffer.from(config.adminPrivateKey.replace('0x', ''), 'hex');
+    tx.sign(pk);
+
+    const serializedTx = tx.serialize();
+    const serializedData = `0x${serializedTx.toString('hex')}`;
+
+    await sendTransaction(web3, serializedData);
+    logger('[makeQuickPoolWithdrawTransaction] end');
+  } catch(err) {
+    logger(`[makeQuickPoolWithdrawTransaction] error: ${err}`);
+  }
+};
+
 const makeRetreebTransferTransaction = async (gasPrice, nonce, gas, to, amount) => {
   logger('[makeRetreebTransferTransaction] start');
   try {
@@ -405,5 +440,6 @@ exports.makeTransferTransaction = makeTransferTransaction;
 exports.makeTombTransferTransaction = makeTombTransferTransaction;
 exports.makeRetreebClaimTransaction = makeRetreebClaimTransaction;
 exports.makeRetreebQuickClaimTransaction = makeRetreebQuickClaimTransaction;
+exports.makeQuickPoolWithdrawTransaction = makeQuickPoolWithdrawTransaction;
 exports.makeRetreebTransferTransaction = makeRetreebTransferTransaction;
 exports.advanceBlockAtTime = advanceBlockAtTime;
